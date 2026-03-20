@@ -13,26 +13,44 @@
 
 <script>
 let peer;
-const socket = new WebSocket("wss://signal-server-1.glitch.me");
+let socket;
+let socketReady = false;
 
 function start() {
   const room = document.getElementById("room").value;
 
-  peer = new SimplePeer({ initiator: true, trickle: false });
+  socket = new WebSocket("wss://signal-server-1.glitch.me");
 
-  peer.on("signal", data => {
-    socket.send(JSON.stringify({ room, data }));
-  });
+  socket.onopen = () => {
+    socketReady = true;
 
-  peer.on("stream", stream => {
-    document.getElementById("video").srcObject = stream;
-  });
+    peer = new SimplePeer({ initiator: true, trickle: false });
+
+    peer.on("signal", data => {
+      if (socketReady) {
+        socket.send(JSON.stringify({ room, data }));
+      }
+    });
+
+    peer.on("stream", stream => {
+      document.getElementById("video").srcObject = stream;
+    });
+  };
 
   socket.onmessage = msg => {
     const message = JSON.parse(msg.data);
-    if (message.room === room) {
+    if (message.room === room && peer) {
       peer.signal(message.data);
     }
+  };
+
+  socket.onerror = err => {
+    console.error("WebSocket error:", err);
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket closed");
+    socketReady = false;
   };
 }
 </script>
