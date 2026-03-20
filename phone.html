@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<body style="background:black;color:white;text-align:center;font-family:Arial;">
+
+<h2>Phone Camera</h2>
+<input id="room" placeholder="Room code">
+<button onclick="start()">Start Camera</button>
+
+<br><br>
+<video id="preview" autoplay playsinline style="width:90%;max-width:300px;"></video>
+
+<script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
+
+<script>
+let peer;
+const socket = new WebSocket("wss://signal-server-1.glitch.me");
+
+async function start() {
+  const room = document.getElementById("room").value;
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "environment" },
+    audio: false
+  });
+
+  document.getElementById("preview").srcObject = stream;
+
+  peer = new SimplePeer({ initiator: false, trickle: false, stream });
+
+  peer.on("signal", data => {
+    socket.send(JSON.stringify({ room, data }));
+  });
+
+  socket.onmessage = msg => {
+    const message = JSON.parse(msg.data);
+    if (message.room === room) {
+      peer.signal(message.data);
+    }
+  };
+}
+</script>
+
+</body>
+</html>
