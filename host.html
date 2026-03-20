@@ -19,7 +19,7 @@ let socketReady = false;
 function start() {
   const room = document.getElementById("room").value;
 
-  socket = new WebSocket("wss://signal-server-1.glitch.me");
+  const socket = new WebSocket("wss://socketsbay.com/wss/v2/1/demo/");
 
   socket.onopen = () => {
     socketReady = true;
